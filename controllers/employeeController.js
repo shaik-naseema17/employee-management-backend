@@ -70,16 +70,34 @@ const addEmployee= async (req,res)=>{
 }
 
 
-const getEmployees=async(req,res)=>{
-    try{
-        const employees=await Employee.find().populate('userId',{password:0}).populate("department")
-        return res.status(200).json({success:true,employees})
+const getEmployees = async (req, res) => {
+  try {
+    await cleanOrphanEmployees(); // Clean up before fetching
 
-    }catch(error){
-        return res.status(500).json({success:false,error :"get employee server error"})
+    const employees = await Employee.find()
+      .populate('userId', { password: 0 })
+      .populate('department');
 
+    return res.status(200).json({ success: true, employees });
+
+  } catch (error) {
+    return res.status(500).json({ success: false, error: "get employee server error" });
+  }
+};
+
+const cleanOrphanEmployees = async () => {
+  const employees = await Employee.find();
+
+  for (const emp of employees) {
+    const userExists = await User.exists({ _id: emp.userId });
+
+    if (!userExists) {
+      console.log(`Deleting employee ${emp._id} because user ${emp.userId} does not exist`);
+      await Employee.findByIdAndDelete(emp._id);
     }
-}
+  }
+};
+
 const getEmployee=async(req,res)=>{
     const{id}=req.params;
     try{
