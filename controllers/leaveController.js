@@ -46,31 +46,32 @@ const getLeave=async(req,res)=>{
     }
 }
 
-const getLeaves=async(req,res)=>{
-    try{
-       const leaves=await Leave.find().populate({
-        path:"employeeId",
-        populate:[
-            {
-            path:"department",
-            select:'dep_name'
+const getLeaves = async (req, res) => {
+  try {
+    let leaves = await Leave.find().populate({
+      path: "employeeId",
+      populate: [
+        {
+          path: "department",
+          select: "dep_name",
         },
         {
-            path:"userId",
-            select:'name'
-        }
+          path: "userId",
+          select: "name",
+        },
+      ],
+    });
 
+    // Filter out records with null employeeId (invalid leaves)
+    leaves = leaves.filter(leave => leave.employeeId && leave.employeeId.userId);
 
-        ]
-       })
-        return res.status(200).json({success:true,leaves})
+    return res.status(200).json({ success: true, leaves });
+  } catch (error) {
+    console.log(error.message);
+    return res.status(500).json({ success: false, error: "leave add server error" });
+  }
+};
 
-    }catch(error){
-        console.log(error.message)
-        return res.status(500).json({success:false,error:"leave add server error"})
-    }
-
-}
 
 const getLeaveDetail = async (req, res) => {
     try {
